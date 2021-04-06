@@ -1,0 +1,8 @@
+{
+  "packages": [
+    "extension",
+    "webview"
+  ],
+  "version": "0.0.0",
+  "npmClient": "yarn"
+}

@@ -1,0 +1,43 @@
+{
+  "name": "tinkerun-vscode",
+  "private": true,
+  "version": "1.0.0",
+  "license": "MIT",
+  "main": "./extension/build/extension.js",
+  "engines": {
+    "vscode": "^1.55.0"
+  },
+  "activationEvents": [
+    "onCommand:tinkerun.connections.quick",
+    "onCustomEditor:tinkerun.tinker"
+  ],
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "tinkerun.tinker",
+        "displayName": "Tinker",
+        "selector": [
+          {
+            "filenamePattern": "*.tinker"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "commands": [
+      {
+        "command": "tinkerun.connections.quick",
+        "title": "Quick Connection"
+      }
+    ]
+  },
+  "scripts": {
+    "bootstrap": "yarn && lerna bootstrap",
+    "start:extension": "lerna run --scope extension start --stream --",
+    "start:webview": "lerna run --scope webview start --stream --",
+    "start": "lerna run start --parallel"
+  },
+  "devDependencies": {
+    "lerna": "^3.22.1"
+  }
+}
