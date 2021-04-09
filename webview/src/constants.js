@@ -1,2 +1,5 @@
 export const SET_COMMAND = 'SET_COMMAND'
+export const GET_COMMAND = 'GET_COMMAND'
 export const CONNECT = 'CONNECT'
+export const GET_CONNECTED = 'GET_CONNECTED'
+export const SET_CONNECTED = 'SET_CONNECTED'

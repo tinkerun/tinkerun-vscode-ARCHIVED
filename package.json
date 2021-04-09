@@ -9,7 +9,8 @@
   },
   "activationEvents": [
     "onCommand:tinkerun.connections.quick",
-    "onCustomEditor:tinkerun.tinker"
+    "onCustomEditor:tinkerun.tinker",
+    "onView:tinkerunConnections"
   ],
   "contributes": {
     "customEditors": [
@@ -27,9 +28,52 @@
     "commands": [
       {
         "command": "tinkerun.connections.quick",
-        "title": "Quick Connection"
+        "title": "Quick Connection",
+        "icon": "$(zap)"
+      },
+      {
+        "command": "tinkerun.connections.connect",
+        "title": "Connect"
+      },
+      {
+        "command": "tinkerun.connections.disconnect",
+        "title": "Disconnect"
+      },
+      {
+        "command": "tinkerun.snippets.create",
+        "title": "Create Snippet",
+        "icon": "$(add)"
+      },
+      {
+        "command": "tinkerun.snippets.open",
+        "title": "Open Snippet"
+      },
+      {
+        "command": "tinkerun.snippets.rename",
+        "title": "Rename Snippet"
+      },
+      {
+        "command": "tinkerun.snippets.delete",
+        "title": "Delete Snippet"
       }
-    ]
+    ],
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "tinkerun.snippets.create",
+          "when": "view == tinkerunConnections && viewItem == connection",
+          "group": "inline"
+        }
+      ]
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "tinkerunConnections",
+          "name": "Connections"
+        }
+      ]
+    }
   },
   "scripts": {
     "bootstrap": "yarn && lerna bootstrap",

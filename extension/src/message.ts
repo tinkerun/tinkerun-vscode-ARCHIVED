@@ -1,15 +1,6 @@
-export type MessageType = 'SET_COMMAND' | 'CONNECT'
+export type MessageType = 'SET_COMMAND' | 'GET_COMMAND' | 'CONNECT' | 'GET_CONNECTED' | 'SET_CONNECTED'
 
 export interface Message {
   type: MessageType
   payload?: any
-}
-
-export interface SetCommandMessage extends Message {
-  type: 'SET_COMMAND'
-  payload: string
-}
-
-export interface ConnectMessage extends Message {
-  type: 'CONNECT'
 }

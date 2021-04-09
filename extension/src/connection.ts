@@ -1,38 +1,101 @@
-import { TextDocument } from 'vscode'
-import low from 'lowdb'
-import FileSync from 'lowdb/adapters/FileSync'
+import {
+  Event,
+  EventEmitter,
+  ProviderResult,
+  TreeDataProvider,
+  TreeItem,
+  TreeItemCollapsibleState,
+  workspace,
+} from 'vscode'
+import {basename} from 'path'
 
-export interface ConnectionSchema {
-  command: string
-  snippets?: SnippetSchema[]
+import {Tinker} from './tinker'
+import {SnippetItem} from './snippet'
+
+export class ConnectionItem extends TreeItem {
+
+  contextValue = 'connection'
+
+  tinker: Tinker
+
+  constructor(file: string) {
+    super(basename(file), TreeItemCollapsibleState.None)
+
+    this.tinker = Tinker.instance(file)
+
+    this.iconPath = this.tinker.themeIcon
+
+    this.command = {
+      title: 'Connect',
+      command: 'tinkerun.connections.connect',
+      arguments: [this.tinker]
+    }
+  }
+
+  connected() {
+    // 设置选中不再触发 command
+    this.command = undefined
+    // 设置可打开状态
+    this.collapsibleState = TreeItemCollapsibleState.Expanded
+  }
 }
 
-export type SnippetType = 'php' | 'shell' | 'js'
+export class ConnectionTreeDataProvider implements TreeDataProvider<TreeItem> {
 
-export interface SnippetSchema {
-  id: string
-  name: string
-  code: string
-  type?: SnippetType
-}
+  private _onDidChangeTreeData: EventEmitter<TreeItem | undefined | void> = new EventEmitter<TreeItem | undefined | void>()
 
-export class Connection {
-  private readonly db: low.LowdbSync<ConnectionSchema>
+  onDidChangeTreeData: Event<void | TreeItem | undefined | null> = this._onDidChangeTreeData.event
 
-  constructor (document: TextDocument) {
-    const adapter = new FileSync<ConnectionSchema>(document.uri.fsPath)
-    this.db = low(adapter)
+  private elements: {[file: string]: TreeItem} = {}
+
+  getElement(file: string) {
+    return this.elements[file]
   }
 
-  get command (): string {
-    return this.db.get('command').value()
+  refresh(element?: TreeItem) {
+    this._onDidChangeTreeData.fire(element)
   }
 
-  setCommand (command: string) {
-    this.db.set('command', command).write()
+  getParent(element: TreeItem): ProviderResult<TreeItem> {
+    if (element instanceof SnippetItem) {
+      return this.getElement(element.file)
+    }
+
+    return null
   }
 
-  refresh () {
-    this.db.read()
+  getChildren(element?: TreeItem): ProviderResult<TreeItem[]> {
+    if (element) {
+      if (element instanceof ConnectionItem && element.tinker.isConnected) {
+        // 获取所有 snippets
+        return Promise.resolve(
+          this.resolveSnippetItems(element)
+        )
+      }
+
+      return Promise.resolve([])
+    }
+
+    return Promise.resolve(this.resolveConnectionItems())
+  }
+
+  getTreeItem(element: TreeItem): TreeItem | Thenable<TreeItem> {
+    return element
+  }
+
+  private resolveSnippetItems(element: ConnectionItem) {
+    return element.tinker
+      .snippets
+      .map(snippet => new SnippetItem(snippet, element.tinker.file))
+  }
+
+  private resolveConnectionItems() {
+    return workspace
+      .findFiles('*.tinker')
+      .then(uris => uris.map(uri => {
+        const item = new ConnectionItem(uri.path)
+        this.elements[uri.path] = item
+        return item
+      }))
   }
 }

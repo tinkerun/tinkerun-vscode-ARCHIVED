@@ -1,10 +1,10 @@
 import {useCallback, useEffect, useState} from 'react'
 import debounce from 'lodash/debounce'
 
-import {SET_COMMAND} from '../constants'
+import {GET_COMMAND, SET_COMMAND} from '../constants'
 
 const useCommand = () => {
-  const [command, setCommand] = useState('cd ~/example-app && php artisan tinker')
+  const [command, setCommand] = useState('')
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const setCommandVSCode = useCallback(debounce(value => {
@@ -15,6 +15,10 @@ const useCommand = () => {
   }, 300), [])
 
   useEffect(() => {
+    vscode.postMessage({
+      type: GET_COMMAND,
+    })
+
     const listener = e => {
       const message = e.data
       if (message.type === SET_COMMAND) {

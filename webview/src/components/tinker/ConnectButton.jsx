@@ -1,7 +1,10 @@
 import Button from '../Button'
 import {CONNECT} from '../../constants'
+import useConnected from '../../hooks/useConnected'
 
 const ConnectButton = () => {
+  const connected = useConnected()
+
   const handleClick = () => {
     vscode.postMessage({
       type: CONNECT,
@@ -10,11 +13,15 @@ const ConnectButton = () => {
 
   return (
     <div className='p-4'>
-      <Button
-        onClick={handleClick}
-      >
-        Connect
-      </Button>
+      {
+        connected
+          ? (
+            <Button disabled={true}>Connected</Button>
+            )
+          : (
+            <Button onClick={handleClick}>Connect</Button>
+            )
+      }
     </div>
   )
 }
