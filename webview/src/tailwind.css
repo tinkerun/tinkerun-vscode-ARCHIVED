@@ -3,3 +3,72 @@
 @tailwind components;
 
 @tailwind utilities;
+
+@layer base {
+    :root {
+        --vscode-settings-textInputBorder: transparent;
+    }
+
+    html {
+        font-family: var(--vscode-font-family);
+        font-size: var(--vscode-font-size);
+    }
+
+    button:focus {
+        outline: none;
+    }
+
+    input {
+        background-color: var(--vscode-settings-textInputBackground);
+        color: var(--vscode-settings-textInputForeground);
+        border-color: var(--vscode-settings-textInputBorder);
+    }
+
+    input:focus {
+        outline-color: var(--vscode-focusBorder);
+    }
+}
+
+@layer components {
+    .btn-primary {
+        @apply rounded-none px-1.5 leading-loose;
+        color: var(--vscode-button-foreground);
+        background-color: var(--vscode-button-background);
+    }
+
+    .btn-primary:focus,
+    .btn-primary:enabled:hover {
+        background-color: var(--vscode-button-hoverBackground);
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.7;
+    }
+
+    .field {
+        @apply border border-transparent p-4;
+    }
+
+    .field:hover {
+        background-color: var(--vscode-notebook-rowHoverBackground);
+    }
+
+    .field:focus,
+    .field:focus-within {
+        border-color: var(--vscode-panel-border);
+        background-color: var(--vscode-settings-focusedRowBackground);
+    }
+
+    .field-label {
+        @apply text-lg font-bold;
+        color: var(--vscode-settings-headerForeground);
+    }
+
+    .field-description {
+        color: var(--vscode-descriptionForeground);
+    }
+
+    .field-input {
+        @apply border outline-none px-1.5 block mt-2 w-full leading-loose;
+    }
+}
