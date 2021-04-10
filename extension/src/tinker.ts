@@ -1,8 +1,8 @@
 import low from 'lowdb'
 import FileSync from 'lowdb/adapters/FileSync'
-import {EventEmitter, Pseudoterminal, Terminal, TerminalDimensions, ThemeIcon, window} from 'vscode'
-import {nanoid} from 'nanoid'
-import {basename} from 'path'
+import { Terminal, ThemeIcon, window } from 'vscode'
+import { nanoid } from 'nanoid'
+import { basename } from 'path'
 
 interface ConnectionSchema {
   command: string
@@ -18,64 +18,90 @@ export interface SnippetSchema {
   type?: SnippetType
 }
 
-let tks: { [key: string]: Tinker } = {}
+export interface SnippetRequest {
+  id?: string
+  name?: string
+  code?: string
+  type?: SnippetType
+}
+
+const tks = new Map<string, Tinker>()
 
 export class Tinker {
-  private db: low.LowdbSync<ConnectionSchema>
+  private readonly db: low.LowdbSync<ConnectionSchema>
 
   readonly file: string
 
   private terminal: Terminal | undefined
 
-  constructor(file: string) {
+  constructor (file: string) {
     this.db = low(new FileSync<ConnectionSchema>(file))
     this.file = file
   }
 
-  get command(): string {
+  get command (): string {
     return this.db
       .defaults({
-        command: 'cd ~/example-app && php artisan tinker',
+        command: 'cd ~/example-app && php artisan tinker'
       })
       .get('command')
       .value()
   }
 
-  set command(value) {
+  set command (value) {
     this.db.set('command', value).write()
   }
 
-  get snippets(): SnippetSchema[] {
+  get snippets (): SnippetSchema[] {
     return this.db
       .defaults({
-        snippets: [],
+        snippets: []
       })
       .get('snippets')
       .value()
   }
 
-  createSnippet() {
+  getSnippetById (id: string) {
+    return this.db
+      .get('snippets')
+      .find({
+        id
+      })
+      .value()
+  }
+
+  createSnippet (snippet?: SnippetRequest) {
     this.db
       .get('snippets')
       .push({
         id: nanoid(),
         name: 'New Snippet',
         code: '',
+        ...snippet
       })
       .write()
   }
 
-  updateSnippet(snippet: SnippetSchema) {
+  updateSnippet (snippet: SnippetRequest) {
     this.db
       .get('snippets')
       .find({
-        id: snippet.id,
+        id: snippet.id
       })
       .assign(snippet)
       .write()
   }
 
-  get themeIcon(): ThemeIcon {
+  deleteSnippet (id: string) {
+    this.db
+      .get('snippets')
+      .remove({
+        id
+      })
+      .write()
+  }
+
+  get themeIcon (): ThemeIcon {
     let iconId = 'device-desktop'
     if (this.command.includes('ssh')) {
       iconId = 'remote-explorer'
@@ -84,19 +110,19 @@ export class Tinker {
     return new ThemeIcon(iconId)
   }
 
-  get isConnected(): boolean {
+  get isConnected (): boolean {
     return this.terminal !== undefined
   }
 
-  refresh() {
+  refresh () {
     this.db.read()
   }
 
-  connect() {
-    if (!this.terminal) {
+  connect () {
+    if (this.terminal == null) {
       this.terminal = window.createTerminal({
         name: basename(this.file),
-        hideFromUser: true,
+        hideFromUser: true
       })
 
       this.terminal.sendText(this.command)
@@ -105,17 +131,17 @@ export class Tinker {
     this.terminal.show()
   }
 
-  disconnect() {
-    if (this.terminal) {
+  disconnect () {
+    if (this.terminal != null) {
       this.terminal.dispose()
     }
   }
 
-  static instance(file: string) {
-    if (!tks[file]) {
-      tks[file] = new Tinker(file)
+  static instance (file: string) {
+    if (tks.get(file) == null) {
+      tks.set(file, new Tinker(file))
     }
 
-    return tks[file]
+    return tks.get(file)
   }
 }

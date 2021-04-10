@@ -8,34 +8,33 @@ import {
   Uri,
   Webview,
   WebviewPanel,
-  workspace,
+  workspace
 } from 'vscode'
 
-import {Message} from './message'
-import {isProduction} from './utils'
-import {Tinker} from './tinker'
+import { Message } from './message'
+import { isProduction } from './utils'
+import { Tinker } from './tinker'
 
 export class TinkerEditorProvider implements CustomTextEditorProvider {
-
   private readonly context: ExtensionContext
 
   private _tinker: Tinker | undefined
 
-  // @ts-ignore
+  // @ts-expect-error
   private webview: Webview
 
-  // @ts-ignore
+  // @ts-expect-error
   private document: TextDocument
 
-  constructor(context: ExtensionContext) {
+  constructor (context: ExtensionContext) {
     this.context = context
   }
 
   /**
    * 获取 Tinker 对象单例
    */
-  get tinker() {
-    if (!this._tinker) {
+  get tinker () {
+    if (this._tinker == null) {
       this._tinker = Tinker.instance(this.document.fileName)
     }
 
@@ -47,20 +46,20 @@ export class TinkerEditorProvider implements CustomTextEditorProvider {
    *
    * @private
    */
-  private postSetCommandMessage() {
+  private postSetCommandMessage () {
     this.webview.postMessage({
       type: 'SET_COMMAND',
-      payload: this.tinker.command,
+      payload: this.tinker.command
     })
   }
 
   /**
    * 发送 tinker 的连接状态至 webview
    */
-  postSetConnectedMessage() {
+  postSetConnectedMessage () {
     this.webview.postMessage({
       type: 'SET_CONNECTED',
-      payload: this.tinker.isConnected,
+      payload: this.tinker.isConnected
     })
   }
 
@@ -70,15 +69,15 @@ export class TinkerEditorProvider implements CustomTextEditorProvider {
    * @param {TextDocumentChangeEvent} e
    * @private
    */
-  private onDidChangeTextDocument(e: TextDocumentChangeEvent) {
-    if (e.document.uri.toString() === this.document.uri.toString() && this.tinker) {
+  private onDidChangeTextDocument (e: TextDocumentChangeEvent) {
+    if (e.document.uri.toString() === this.document.uri.toString() && (this.tinker != null)) {
       // 更新数据
       this.tinker.refresh()
       this.postSetCommandMessage()
     }
   }
 
-  resolveCustomTextEditor(document: TextDocument, webviewPanel: WebviewPanel, token: CancellationToken): void | Thenable<void> {
+  resolveCustomTextEditor (document: TextDocument, webviewPanel: WebviewPanel, token: CancellationToken): void | Thenable<void> {
     this.webview = webviewPanel.webview
     this.document = document
 
@@ -94,12 +93,12 @@ export class TinkerEditorProvider implements CustomTextEditorProvider {
   /**
    * 生产环境下使用文件，开发环境下使用 url 地址
    */
-  get tinkerScriptUrl() {
+  get tinkerScriptUrl () {
     if (isProduction) {
       return this
         .webview
         .asWebviewUri(
-          Uri.joinPath(this.context.extensionUri, 'webview/build/dist', 'tinker.js'),
+          Uri.joinPath(this.context.extensionUri, 'webview/build/dist', 'tinker.js')
         )
         .toString()
     }
@@ -111,20 +110,20 @@ export class TinkerEditorProvider implements CustomTextEditorProvider {
    * 用于开发模式打开 HMR
    * 参考 https://github.com/snowpackjs/esm-hmr/blob/master/src/client.ts#L33
    */
-  get wsScript() {
+  get wsScript () {
     if (isProduction) {
       return ''
     }
 
-    return `<script>window.HMR_WEBSOCKET_URL = 'ws://localhost:8080'</script>`
+    return '<script>window.HMR_WEBSOCKET_URL = \'ws://localhost:8080\'</script>'
   }
 
   /**
    * 加载 webview 内容
    */
-  render() {
+  render () {
     this.webview.options = {
-      enableScripts: true,
+      enableScripts: true
     }
 
     // 绑定 webview 返回的消息

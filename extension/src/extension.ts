@@ -1,13 +1,13 @@
-import {window, ExtensionContext, commands} from 'vscode'
+import { window, ExtensionContext, commands, workspace } from 'vscode'
 
 import { TinkerEditorProvider } from './editor'
-import {ConnectionItem, ConnectionTreeDataProvider} from './connection'
-import {Tinker} from './tinker'
+import { ConnectionItem, ConnectionTreeDataProvider } from './connection'
+import { quickInputSnippetName, SnippetContentProvider, SnippetItem } from './snippet'
+import { Tinker } from './tinker'
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate (context: ExtensionContext) {
-
   const editor = new TinkerEditorProvider(context)
 
   context.subscriptions.push(
@@ -17,13 +17,13 @@ export function activate (context: ExtensionContext) {
     )
   )
 
-  const treeDataProvider = new ConnectionTreeDataProvider()
+  const connectionTreeDataProvider = new ConnectionTreeDataProvider()
 
-  const viewer = window.createTreeView(
+  const connectionsViewer = window.createTreeView(
     'tinkerunConnections',
     {
-      treeDataProvider,
-      canSelectMany: false,
+      treeDataProvider: connectionTreeDataProvider,
+      canSelectMany: false
     }
   )
 
@@ -33,13 +33,13 @@ export function activate (context: ExtensionContext) {
       (tinker: Tinker) => {
         tinker.connect()
 
-        const item = treeDataProvider.getElement(tinker.file) as ConnectionItem
+        const item = connectionTreeDataProvider.getElement(tinker.file) as ConnectionItem
         item.connected()
-        treeDataProvider.refresh(item)
+        connectionTreeDataProvider.refresh(item)
 
         // 参考文档：`If the tree view is not visible then the tree view is shown and element is revealed.`
         // 展示 tree view 以及 connection item 中的 snippets
-        viewer.reveal(item, {expand: true})
+        connectionsViewer.reveal(item, { expand: true })
 
         // webview 中的 connect 按钮触发 connected
         editor.postSetConnectedMessage()
@@ -53,8 +53,8 @@ export function activate (context: ExtensionContext) {
       (tinker: Tinker) => {
         tinker.disconnect()
 
-        treeDataProvider.refresh(
-          treeDataProvider.getElement(tinker.file)
+        connectionTreeDataProvider.refresh(
+          connectionTreeDataProvider.getElement(tinker.file)
         )
       }
     )
@@ -63,13 +63,90 @@ export function activate (context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand(
       'tinkerun.snippets.create',
-      (item: ConnectionItem) => {
-        item.tinker.createSnippet()
-        treeDataProvider.refresh(item)
+      async (item: ConnectionItem) => {
+        const name = await quickInputSnippetName()
+        if (!name) {
+          return
+        }
+
+        item.tinker.createSnippet({ name })
+        connectionTreeDataProvider.refresh(item)
+      }
+    )
+  )
+
+  const snippetContentProvider = new SnippetContentProvider()
+
+  context.subscriptions.push(
+    workspace.registerTextDocumentContentProvider(
+      SnippetContentProvider.scheme,
+      snippetContentProvider
+    )
+  )
+
+  context.subscriptions.push(
+    commands.registerCommand(
+      'tinkerun.snippets.open',
+      async (item: SnippetItem) => {
+        const editor = await window.showTextDocument(item.uri, {
+          preview: false
+        })
+
+        editor.options = {}
+      }
+    )
+  )
+
+  context.subscriptions.push(
+    commands.registerCommand(
+      'tinkerun.snippets.delete',
+      (item: SnippetItem) => {
+        const tinker = item.tinker
+
+        if (item.id) {
+          tinker.deleteSnippet(item.id)
+        }
+
+        // 更新 tree view
+        connectionTreeDataProvider.refresh(
+          connectionTreeDataProvider.getElement(tinker.file)
+        )
+
+        // 关闭 document
+        // 参考 https://stackoverflow.com/a/54767938
+        window
+          .showTextDocument(item.uri, { preview: true, preserveFocus: false })
+          .then(() => commands.executeCommand('workbench.action.closeActiveEditor'))
+      }
+    )
+  )
+
+  context.subscriptions.push(
+    commands.registerCommand(
+      'tinkerun.snippets.rename',
+      async (item: SnippetItem) => {
+        const oldUri = item.uri
+
+        if (item.id) {
+          const label = typeof item.label !== 'object' ? item.label : item.label.label
+          const name = await quickInputSnippetName(label)
+          item.tinker.updateSnippet({
+            id: item.id,
+            name
+          })
+
+          // 更新 label
+          item.label = name
+        }
+
+        connectionTreeDataProvider.refresh(item)
+
+        // TODO 更新 tab name
       }
     )
   )
 }
 
 // this method is called when your extension is deactivated
-export function deactivate () {}
+export function deactivate () {
+}

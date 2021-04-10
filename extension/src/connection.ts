@@ -5,20 +5,19 @@ import {
   TreeDataProvider,
   TreeItem,
   TreeItemCollapsibleState,
-  workspace,
+  workspace
 } from 'vscode'
-import {basename} from 'path'
+import { basename } from 'path'
 
-import {Tinker} from './tinker'
-import {SnippetItem} from './snippet'
+import { Tinker } from './tinker'
+import { SnippetItem } from './snippet'
 
 export class ConnectionItem extends TreeItem {
-
   contextValue = 'connection'
 
   tinker: Tinker
 
-  constructor(file: string) {
+  constructor (file: string) {
     super(basename(file), TreeItemCollapsibleState.None)
 
     this.tinker = Tinker.instance(file)
@@ -32,7 +31,7 @@ export class ConnectionItem extends TreeItem {
     }
   }
 
-  connected() {
+  connected () {
     // 设置选中不再触发 command
     this.command = undefined
     // 设置可打开状态
@@ -41,31 +40,30 @@ export class ConnectionItem extends TreeItem {
 }
 
 export class ConnectionTreeDataProvider implements TreeDataProvider<TreeItem> {
-
-  private _onDidChangeTreeData: EventEmitter<TreeItem | undefined | void> = new EventEmitter<TreeItem | undefined | void>()
+  private readonly _onDidChangeTreeData: EventEmitter<TreeItem | undefined | void> = new EventEmitter<TreeItem | undefined | void>()
 
   onDidChangeTreeData: Event<void | TreeItem | undefined | null> = this._onDidChangeTreeData.event
 
   private elements: {[file: string]: TreeItem} = {}
 
-  getElement(file: string) {
+  getElement (file: string) {
     return this.elements[file]
   }
 
-  refresh(element?: TreeItem) {
+  refresh (element?: TreeItem) {
     this._onDidChangeTreeData.fire(element)
   }
 
-  getParent(element: TreeItem): ProviderResult<TreeItem> {
+  getParent (element: TreeItem): ProviderResult<TreeItem> {
     if (element instanceof SnippetItem) {
-      return this.getElement(element.file)
+      return this.getElement(element.tinker.file)
     }
 
     return null
   }
 
-  getChildren(element?: TreeItem): ProviderResult<TreeItem[]> {
-    if (element) {
+  getChildren (element?: TreeItem): ProviderResult<TreeItem[]> {
+    if (element != null) {
       if (element instanceof ConnectionItem && element.tinker.isConnected) {
         // 获取所有 snippets
         return Promise.resolve(
@@ -79,17 +77,17 @@ export class ConnectionTreeDataProvider implements TreeDataProvider<TreeItem> {
     return Promise.resolve(this.resolveConnectionItems())
   }
 
-  getTreeItem(element: TreeItem): TreeItem | Thenable<TreeItem> {
+  getTreeItem (element: TreeItem): TreeItem | Thenable<TreeItem> {
     return element
   }
 
-  private resolveSnippetItems(element: ConnectionItem) {
+  private resolveSnippetItems (element: ConnectionItem) {
     return element.tinker
       .snippets
       .map(snippet => new SnippetItem(snippet, element.tinker.file))
   }
 
-  private resolveConnectionItems() {
+  private resolveConnectionItems () {
     return workspace
       .findFiles('*.tinker')
       .then(uris => uris.map(uri => {

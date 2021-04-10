@@ -55,14 +55,34 @@
       {
         "command": "tinkerun.snippets.delete",
         "title": "Delete Snippet"
+      },
+      {
+        "command": "tinkerun.snippets.run",
+        "title": "Run Snippet",
+        "icon": "$(run)"
       }
     ],
     "menus": {
+      "editor/title": [
+        {
+          "command": "tinkerun.snippets.run",
+          "when": "resourceScheme == snippet",
+          "group": "navigation"
+        }
+      ],
       "view/item/context": [
         {
           "command": "tinkerun.snippets.create",
           "when": "view == tinkerunConnections && viewItem == connection",
           "group": "inline"
+        },
+        {
+          "command": "tinkerun.snippets.rename",
+          "when": "view == tinkerunConnections && viewItem == snippet"
+        },
+        {
+          "command": "tinkerun.snippets.delete",
+          "when": "view == tinkerunConnections && viewItem == snippet"
         }
       ]
     },
