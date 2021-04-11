@@ -8,9 +8,8 @@
     "vscode": "^1.55.0"
   },
   "activationEvents": [
-    "onCommand:tinkerun.connections.quick",
-    "onCustomEditor:tinkerun.tinker",
-    "onView:tinkerunConnections"
+    "onFileSystem:tinker",
+    "onCustomEditor:tinkerun.tinker"
   ],
   "contributes": {
     "customEditors": [
@@ -27,72 +26,34 @@
     ],
     "commands": [
       {
-        "command": "tinkerun.connections.quick",
+        "command": "tinkerun.quick",
         "title": "Quick Connection",
         "icon": "$(zap)"
       },
       {
-        "command": "tinkerun.connections.connect",
+        "command": "tinkerun.connect",
         "title": "Connect"
       },
       {
-        "command": "tinkerun.connections.disconnect",
+        "command": "tinkerun.disconnect",
         "title": "Disconnect"
       },
       {
-        "command": "tinkerun.snippets.create",
-        "title": "Create Snippet",
-        "icon": "$(add)"
-      },
-      {
-        "command": "tinkerun.snippets.open",
-        "title": "Open Snippet"
-      },
-      {
-        "command": "tinkerun.snippets.rename",
-        "title": "Rename Snippet"
-      },
-      {
-        "command": "tinkerun.snippets.delete",
-        "title": "Delete Snippet"
-      },
-      {
-        "command": "tinkerun.snippets.run",
-        "title": "Run Snippet",
+        "command": "tinkerun.run",
+        "title": "Run",
         "icon": "$(run)"
       }
     ],
     "menus": {
       "editor/title": [
         {
-          "command": "tinkerun.snippets.run",
-          "when": "resourceScheme == snippet",
+          "command": "tinkerun.run",
+          "when": "resourceScheme == tinker",
           "group": "navigation"
-        }
-      ],
-      "view/item/context": [
-        {
-          "command": "tinkerun.snippets.create",
-          "when": "view == tinkerunConnections && viewItem == connection",
-          "group": "inline"
-        },
-        {
-          "command": "tinkerun.snippets.rename",
-          "when": "view == tinkerunConnections && viewItem == snippet"
-        },
-        {
-          "command": "tinkerun.snippets.delete",
-          "when": "view == tinkerunConnections && viewItem == snippet"
         }
       ]
     },
     "views": {
-      "explorer": [
-        {
-          "id": "tinkerunConnections",
-          "name": "Connections"
-        }
-      ]
     }
   },
   "scripts": {

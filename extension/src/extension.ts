@@ -1,152 +1,77 @@
-import { window, ExtensionContext, commands, workspace } from 'vscode'
+import {window, ExtensionContext, commands, workspace, Uri} from 'vscode'
+import path from 'path'
 
-import { TinkerEditorProvider } from './editor'
-import { ConnectionItem, ConnectionTreeDataProvider } from './connection'
-import { quickInputSnippetName, SnippetContentProvider, SnippetItem } from './snippet'
-import { Tinker } from './tinker'
+import {TinkerEditor, TinkerEditorProvider} from './editor'
+import {TinkerFileSystemProvider} from './filesystem'
+import {Terminal} from './terminal'
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
-export function activate (context: ExtensionContext) {
-  const editor = new TinkerEditorProvider(context)
+export function activate(context: ExtensionContext) {
 
   context.subscriptions.push(
     window.registerCustomEditorProvider(
       'tinkerun.tinker',
-      editor
-    )
-  )
-
-  const connectionTreeDataProvider = new ConnectionTreeDataProvider()
-
-  const connectionsViewer = window.createTreeView(
-    'tinkerunConnections',
-    {
-      treeDataProvider: connectionTreeDataProvider,
-      canSelectMany: false
-    }
+      new TinkerEditorProvider(context),
+    ),
   )
 
   context.subscriptions.push(
-    commands.registerCommand(
-      'tinkerun.connections.connect',
-      (tinker: Tinker) => {
-        tinker.connect()
-
-        const item = connectionTreeDataProvider.getElement(tinker.file) as ConnectionItem
-        item.connected()
-        connectionTreeDataProvider.refresh(item)
-
-        // 参考文档：`If the tree view is not visible then the tree view is shown and element is revealed.`
-        // 展示 tree view 以及 connection item 中的 snippets
-        connectionsViewer.reveal(item, { expand: true })
-
-        // webview 中的 connect 按钮触发 connected
-        editor.postSetConnectedMessage()
+    window.onDidCloseTerminal(async e => {
+      const terminal = Terminal.instance(`${e.processId}`)
+      if (terminal) {
+        commands.executeCommand('tinkerun.disconnect', terminal.file)
       }
-    )
+    })
+  )
+
+  context.subscriptions.push(
+    workspace.registerFileSystemProvider(
+      'tinker',
+      new TinkerFileSystemProvider(),
+      {
+        isCaseSensitive: true,
+      },
+    ),
   )
 
   context.subscriptions.push(
     commands.registerCommand(
-      'tinkerun.connections.disconnect',
-      (tinker: Tinker) => {
-        tinker.disconnect()
+      'tinkerun.connect',
+      (file: string) => {
+        Terminal.instance(file).show()
 
-        connectionTreeDataProvider.refresh(
-          connectionTreeDataProvider.getElement(tinker.file)
-        )
-      }
-    )
-  )
-
-  context.subscriptions.push(
-    commands.registerCommand(
-      'tinkerun.snippets.create',
-      async (item: ConnectionItem) => {
-        const name = await quickInputSnippetName()
-        if (!name) {
-          return
-        }
-
-        item.tinker.createSnippet({ name })
-        connectionTreeDataProvider.refresh(item)
-      }
-    )
-  )
-
-  const snippetContentProvider = new SnippetContentProvider()
-
-  context.subscriptions.push(
-    workspace.registerTextDocumentContentProvider(
-      SnippetContentProvider.scheme,
-      snippetContentProvider
-    )
-  )
-
-  context.subscriptions.push(
-    commands.registerCommand(
-      'tinkerun.snippets.open',
-      async (item: SnippetItem) => {
-        const editor = await window.showTextDocument(item.uri, {
-          preview: false
+        workspace.updateWorkspaceFolders(0, 0, {
+          uri: Uri.parse('tinker:/').with({fragment: file}),
+          name: `Tinkerun: ${path.basename(file)}`,
         })
 
-        editor.options = {}
-      }
-    )
+        TinkerEditor.instance(file).postSetConnectedMessage()
+      },
+    ),
   )
 
   context.subscriptions.push(
     commands.registerCommand(
-      'tinkerun.snippets.delete',
-      (item: SnippetItem) => {
-        const tinker = item.tinker
-
-        if (item.id) {
-          tinker.deleteSnippet(item.id)
+      'tinkerun.disconnect',
+      (file: string) => {
+        // 清理文件夹
+        const index = workspace.getWorkspaceFolder(Uri.parse(`tinker:/`).with({fragment: file}))?.index
+        if (index !== undefined) {
+          workspace.updateWorkspaceFolders(index, 1)
+        }
+        // 清理 terminal
+        const terminal = Terminal.instance(file)
+        if (terminal) {
+          terminal.dispose()
         }
 
-        // 更新 tree view
-        connectionTreeDataProvider.refresh(
-          connectionTreeDataProvider.getElement(tinker.file)
-        )
-
-        // 关闭 document
-        // 参考 https://stackoverflow.com/a/54767938
-        window
-          .showTextDocument(item.uri, { preview: true, preserveFocus: false })
-          .then(() => commands.executeCommand('workbench.action.closeActiveEditor'))
-      }
-    )
-  )
-
-  context.subscriptions.push(
-    commands.registerCommand(
-      'tinkerun.snippets.rename',
-      async (item: SnippetItem) => {
-        const oldUri = item.uri
-
-        if (item.id) {
-          const label = typeof item.label !== 'object' ? item.label : item.label.label
-          const name = await quickInputSnippetName(label)
-          item.tinker.updateSnippet({
-            id: item.id,
-            name
-          })
-
-          // 更新 label
-          item.label = name
-        }
-
-        connectionTreeDataProvider.refresh(item)
-
-        // TODO 更新 tab name
-      }
-    )
+        TinkerEditor.instance(file).postSetConnectedMessage()
+      },
+    ),
   )
 }
 
 // this method is called when your extension is deactivated
-export function deactivate () {
+export function deactivate() {
 }
