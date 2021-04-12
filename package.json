@@ -40,7 +40,7 @@
       },
       {
         "command": "tinkerun.run",
-        "title": "Run",
+        "title": "Run Tinker",
         "icon": "$(run)"
       }
     ],

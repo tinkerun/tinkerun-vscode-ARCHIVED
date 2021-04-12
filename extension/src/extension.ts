@@ -4,6 +4,7 @@ import path from 'path'
 import {TinkerEditor, TinkerEditorProvider} from './editor'
 import {TinkerFileSystemProvider} from './filesystem'
 import {Terminal} from './terminal'
+import {minifyPHPCode} from './utils'
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -22,7 +23,7 @@ export function activate(context: ExtensionContext) {
       if (terminal) {
         commands.executeCommand('tinkerun.disconnect', terminal.file)
       }
-    })
+    }),
   )
 
   context.subscriptions.push(
@@ -67,6 +68,31 @@ export function activate(context: ExtensionContext) {
         }
 
         TinkerEditor.instance(file).postSetConnectedMessage()
+      },
+    ),
+  )
+
+  context.subscriptions.push(
+    commands.registerCommand(
+      'tinkerun.run',
+      () => {
+        if (!window.activeTextEditor) {
+          return
+        }
+
+        const {document} = window.activeTextEditor
+        if (document.uri.scheme !== 'tinker') {
+          return
+        }
+
+        document.save()
+
+        const file = document.uri.fragment
+        const terminal = Terminal.instance(file)
+        terminal.show()
+        const code = minifyPHPCode(document.getText())
+
+        terminal.sendText(code)
       },
     ),
   )
