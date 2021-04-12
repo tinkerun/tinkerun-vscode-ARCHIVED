@@ -1,6 +1,7 @@
 import {Terminal as BaseTerminal, window} from 'vscode'
 import {basename} from 'path'
-import {Database, database} from './database'
+
+import {database} from './database'
 
 let terminals = new Map<string, Terminal>()
 
@@ -8,16 +9,16 @@ export class Terminal {
 
   private readonly terminal: BaseTerminal
   readonly file: string
-  db: Database
 
   constructor(file: string) {
     this.file = file
-    this.db = database(file)
 
     this.terminal = window.createTerminal({
       name: basename(file),
       hideFromUser: true,
     })
+
+    this.terminal.sendText(database(file).get('command').value())
 
     terminals.set(`${this.terminal.processId}`, this)
   }
