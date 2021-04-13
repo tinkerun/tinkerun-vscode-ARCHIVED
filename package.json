@@ -27,24 +27,33 @@
     "commands": [
       {
         "command": "tinkerun.quick",
-        "title": "Quick Connection",
+        "title": "Tinkerun: Quick Connection",
         "icon": "$(zap)"
       },
       {
         "command": "tinkerun.connect",
-        "title": "Connect"
+        "title": "Tinkerun: Connect",
+        "icon": "$(plug)"
       },
       {
         "command": "tinkerun.disconnect",
-        "title": "Disconnect"
+        "title": "Tinkerun: Disconnect",
+        "icon": "$(debug-disconnect)"
       },
       {
         "command": "tinkerun.run",
-        "title": "Run Tinker",
-        "icon": "$(run)"
+        "title": "Tinkerun: Run",
+        "icon": "$(debug-start)"
       }
     ],
     "menus": {
+      "editor/context": [
+        {
+          "command": "tinkerun.run",
+          "when": "resourceScheme == tinker",
+          "group": "navigation"
+        }
+      ],
       "editor/title": [
         {
           "command": "tinkerun.run",

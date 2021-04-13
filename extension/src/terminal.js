@@ -1,16 +1,18 @@
-import {Terminal as BaseTerminal, window} from 'vscode'
+import {window} from 'vscode'
 import {basename} from 'path'
 
 import {database} from './database'
 
-let terminals = new Map<string, Terminal>()
+/**
+ * @type {Map<string, TinkerTerminal>}
+ */
+const terminals = new Map()
 
-export class Terminal {
-
-  private readonly terminal: BaseTerminal
-  readonly file: string
-
-  constructor(file: string) {
+export class TinkerTerminal {
+  /**
+   * @param {string} file
+   */
+  constructor (file) {
     this.file = file
 
     this.terminal = window.createTerminal({
@@ -23,31 +25,38 @@ export class Terminal {
     terminals.set(`${this.terminal.processId}`, this)
   }
 
-  show() {
+  show () {
     this.terminal.show()
   }
 
-  sendText(text: string) {
+  sendText (text) {
     this.terminal.sendText(text)
   }
 
-  dispose() {
+  dispose () {
     terminals.delete(this.file)
     terminals.delete(`${this.terminal.processId}`)
 
     this.terminal.dispose()
   }
 
-  static isConnected(file: string): boolean {
+  /**
+   * @param {string} file
+   * @return {boolean}
+   */
+  static isConnected (file) {
     return terminals.has(file)
   }
 
-  static instance(file: string): Terminal {
-    if (!terminals.has(file)) {
-      terminals.set(file, new Terminal(file))
+  /**
+   * @param {string} file
+   * @return {TinkerTerminal}
+   */
+  static instance (file) {
+    if (!TinkerTerminal.isConnected(file)) {
+      terminals.set(file, new TinkerTerminal(file))
     }
 
-    // @ts-ignore
     return terminals.get(file)
   }
 }

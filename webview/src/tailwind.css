@@ -18,6 +18,10 @@
         outline: none;
     }
 
+    button:disabled {
+        @apply opacity-70;
+    }
+
     input {
         background-color: var(--vscode-settings-textInputBackground);
         color: var(--vscode-settings-textInputForeground);
@@ -30,8 +34,12 @@
 }
 
 @layer components {
-    .btn-primary {
+
+    .btn {
         @apply rounded-none px-1.5 leading-loose;
+    }
+
+    .btn-primary {
         color: var(--vscode-button-foreground);
         background-color: var(--vscode-button-background);
     }
@@ -41,8 +49,14 @@
         background-color: var(--vscode-button-hoverBackground);
     }
 
-    .btn-primary:disabled {
-        opacity: 0.7;
+    .btn-secondary {
+        color: var(--vscode-button-secondaryForeground);
+        background-color: var(--vscode-button-secondaryBackground);
+    }
+
+    .btn-secondary:focus,
+    .btn-secondary:enabled:hover {
+        background-color: var(--vscode-button-secondaryHoverBackground);
     }
 
     .field {

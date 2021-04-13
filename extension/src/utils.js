@@ -1,12 +1,18 @@
 import compact from 'lodash/compact'
 import join from 'lodash/join'
 
+/**
+ * @type {boolean}
+ */
 export const isProduction = process.env.NODE_ENV === 'production'
 
 /**
  * 删除注释，并且把代码变成一行
+ *
+ * @param {string} code
+ * @return {string}
  */
-export const minifyPHPCode = (code: string): string => {
+export const minifyPHPCode = code => {
   // 移除 php tag
   code = code.replace(/<\?(php)?/, '')
   code = code.replace(/\?>/, '')

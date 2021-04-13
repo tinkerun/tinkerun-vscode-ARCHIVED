@@ -1,21 +1,22 @@
 import Button from '../Button'
-import {CONNECT} from '../../constants'
+import {DISCONNECT} from '../../constants'
 
-const ConnectButton = (props) => {
+const DisconnectButton = (props) => {
   const handleClick = () => {
     vscode.postMessage({
-      type: CONNECT,
+      type: DISCONNECT,
     })
   }
 
   return (
     <Button
       onClick={handleClick}
+      appearance='secondary'
       {...props}
     >
-      Connect
+      Disconnect
     </Button>
   )
 }
 
-export default ConnectButton
+export default DisconnectButton
